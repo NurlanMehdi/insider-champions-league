@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # Laravel Application
+  app:
+    build:
+      context: .
+      target: development
+    container_name: premier_league_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - ./storage:/var/www/html/storage
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=mysql
+      - DB_HOST=database
+      - DB_DATABASE=premier_league
+      - DB_USERNAME=premier_league_user
+      - DB_PASSWORD=premier_league_password
+      - REDIS_HOST=redis
+    depends_on:
+      - database
+      - redis
+    networks:
+      - premier_league_network
+
+  # Nginx Web Server
+  webserver:
+    image: nginx:alpine
+    container_name: premier_league_webserver
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/development.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - premier_league_network
+
+  # MySQL Database
+  database:
+    image: mysql:8.0
+    container_name: premier_league_database
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: premier_league
+      MYSQL_USER: premier_league_user
+      MYSQL_PASSWORD: premier_league_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3307:3306"
+    networks:
+      - premier_league_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: premier_league_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - premier_league_network
+
+  # Node.js for development (hot reload)
+  node:
+    image: node:20-alpine
+    container_name: premier_league_node
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - node_modules:/var/www/html/node_modules
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
+    environment:
+      - HOST=0.0.0.0
+    networks:
+      - premier_league_network
+
+  # PHPMyAdmin (optional for database management)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: premier_league_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: database
+      PMA_USER: premier_league_user
+      PMA_PASSWORD: premier_league_password
+    ports:
+      - "8080:80"
+    depends_on:
+      - database
+    networks:
+      - premier_league_network
+
+volumes:
+  mysql_data:
+  redis_data:
+  node_modules:
+
+networks:
+  premier_league_network:
+    driver: bridge 
