@@ -2,9 +2,9 @@
 
 namespace App\Application\Services;
 
-use App\Application\DTOs\MatchDTO;
 use App\Domain\Repositories\Interfaces\MatchRepositoryInterface;
 use App\Domain\Repositories\Interfaces\TeamRepositoryInterface;
+use App\Application\DTOs\MatchDTO;
 use App\Domain\ValueObjects\Score;
 
 final class MatchManagementService
@@ -23,11 +23,11 @@ final class MatchManagementService
     public function getWeeklyResults(int $week): array
     {
         $matches = $this->matchRepository->findByWeek($week);
-        
+
         return array_map(function ($match) {
             $homeTeam = $this->teamRepository->findById($match->getHomeTeamId());
             $awayTeam = $this->teamRepository->findById($match->getAwayTeamId());
-            
+
             return new MatchDTO(
                 $match->getId(),
                 $homeTeam->getName(),
@@ -47,12 +47,12 @@ final class MatchManagementService
         $match = $this->matchRepository->findById($matchId);
         $homeTeam = $this->teamRepository->findById($match->getHomeTeamId());
         $awayTeam = $this->teamRepository->findById($match->getAwayTeamId());
-        
+
         $score = Score::create($homeScore, $awayScore);
-        
+
         $match->updateResult($score);
         $this->matchRepository->save($match);
-        
+
         return new MatchDTO(
             $match->getId(),
             $homeTeam->getName(),
@@ -65,4 +65,4 @@ final class MatchManagementService
             $match->getPlayedAt()?->format('Y-m-d H:i:s')
         );
     }
-} 
+}
