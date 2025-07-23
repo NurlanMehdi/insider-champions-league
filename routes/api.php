@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\LeagueStandingsController;
-use App\Http\Controllers\MatchManagementController;
 use App\Http\Controllers\MatchSimulationController;
+use App\Http\Controllers\MatchManagementController;
+use App\Http\Controllers\LeagueStandingsController;
 use App\Http\Controllers\LeagueSetupController;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -20,4 +20,4 @@ Route::prefix('league')->group(function () {
     Route::put('/match/{matchId}', [MatchManagementController::class, 'updateMatchResult']);
     Route::post('/reset', [LeagueSetupController::class, 'resetLeague']);
     Route::post('/initialize', [LeagueSetupController::class, 'initializeLeague']);
-}); 
+});
